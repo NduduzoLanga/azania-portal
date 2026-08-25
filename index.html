@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azania Paragon Institute - Application Portal</title>
+    
+    <!-- Tailwind CSS (No Build) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel (Compiles JSX in the browser) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // SVG Icons
+        const IconUser = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+        const IconGraduation = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.42 10.922a2 2 0 0 1-.019 3.836l-8.58 3.974a2 2 0 0 1-1.642 0l-8.58-3.974a2 2 0 0 1-.019-3.836l8.66-3.805a2 2 0 0 1 1.52 0l8.66 3.805z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>;
+        const IconWallet = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a8 8 0 0 1-5 7.96V16a2 2 0 0 0-2-2h-3"/></svg>;
+        const IconFile = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>;
+        const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+        const IconPlus = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>;
+        const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>;
+
+        const PROGRAMS = [
+            { code: "#API-CDP-4402", name: "Certified Digital Practitioner: Digital Literacy Fundamentals" },
+            { code: "#API-IOT-327", name: "Internet of Things (IoT) Fundamentals" },
+            { code: "#API-SDF-4369", name: "Social Media and Digital Marketing Fundamentals" },
+            { code: "#API-AFBP-209", name: "Artificial Intelligence Fundamentals and Basic Prompting" },
+            { code: "#API-CLF-2398", name: "Cloud Computing Fundamentals" },
+            { code: "#API-CSF-419", name: "Cyber Security Fundamentals" }
+        ];
+
+        function App() {
+            const [step, setStep] = useState(0);
+            const [agreedToTC, setAgreedToTC] = useState(false);
+            const [isSubmitting, setIsSubmitting] = useState(false);
+            const [uniqueID, setUniqueID] = useState("");
+
+            const [formData, setFormData] = useState({
+                program: "",
+                firstName: "", lastName: "", idNumber: "", email: "", phone: "", address: "",
+                instName: "", instCity: "", instProvince: "", highestQual: "",
+                qualName: "", qualYear: "", qualDescription: "",
+                grades: [{ subject: "", percentage: "", level: "" }],
+                feePayerName: "", feePayerID: "", feePayerPhone: "", feePayerEmployment: "", affordabilityStatus: false,
+                files: {}, consent1: false, consent2: false
+            });
+
+            const handleInputChange = (e) => {
+                const { name, value, type, checked } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: type === 'checkbox' ? checked : value
+                }));
+            };
+
+            const handleFileChange = (e) => {
+                const { name, files } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    files: { ...prev.files, [name]: files[0] }
+                }));
+            };
+
+            const updateGradeRow = (index, field, value) => {
+                const newGrades = [...formData.grades];
+                newGrades[index][field] = value;
+                setFormData({ ...formData, grades: newGrades });
+            };
+
+            const generateAppId = () => {
+                const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
+                return `AZP-${new Date().getFullYear()}-${randomStr}`;
+            };
+
+            const submitApplication = async (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
+                
+                const appId = generateAppId();
+                setUniqueID(appId);
+
+                try {
+                    const files = {};
+                    for (const [name, file] of Object.entries(formData.files)) {
+                        if (!file) continue;
+                        files[name] = {
+                            name: file.name,
+                            type: file.type,
+                            data: await new Promise((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => resolve(String(reader.result).split(',')[1]);
+                                reader.onerror = reject;
+                                reader.readAsDataURL(file);
+                            })
+                        };
+                    }
+
+                    const response = await fetch('/api/applications', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            applicationId: appId,
+                            applicationData: { ...formData, files: undefined },
+                            files
+                        })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Submission failed');
+                    setStep(5);
+                } catch (error) {
+                    alert(error.message || "Error submitting application. Please try again.");
+                    setUniqueID("");
+                }
+                setIsSubmitting(false);
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-4xl w-full bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
+                        
+                        <div className="bg-slate-900 px-8 py-6 text-white text-center">
+                            <h1 className="text-3xl font-bold tracking-tight">Azania Paragon Institute</h1>
+                            <p className="text-slate-400 mt-2">Admissions Portal</p>
+                        </div>
+
+                        <div className="p-8">
+                            
+                            {/* STEP 0: ADMISSIONS PORTAL: TERMS & CONDITIONS AND DECLARATION OF CONSENT */}
+                            {step === 0 && (
+                                <div className="space-y-6">
+                                    <h2 className="text-2xl font-bold text-gray-800 border-b pb-2">Terms & Conditions</h2>
+                                    <div className="h-64 overflow-y-auto bg-gray-50 p-6 rounded-md border text-sm text-gray-600 space-y-4">
+                                        <p><strong>1. SCOPE OF APPLICATION</strong><br/>By accepting these terms, you are applying for admission into the Azania Paragon Institute’s rigorous technical upskilling programs. This portal specifically processes applications for our specialized, standalone foundational tracks, which include the Certified Digital Practitioner: Digital Literacy Fundamentals, Internet of Things (IoT) Fundamentals, Social Media and Digital Marketing Fundamentals, Artificial Intelligence Fundamentals and Basic Prompting, Cloud Computing Fundamentals, and Cyber Security Fundamentals. These programs are designed as intensive educational pathways aimed at equipping you with globally relevant, high-demand technology skills, independent of our corporate-sponsored LaunchLab initiatives.</p>
+                                        <p><strong>2. ACCURACY OF INFORMATION & EVALUATION PROCESS</strong><br/>You formally declare that all personal details, academic records, and supporting documentation submitted through this portal are strictly accurate, authentic, and represent your own original work. API reserves the right to independently verify any information provided during or after the application phase. You acknowledge that the discovery of falsified, plagiarized, or misleading information will result in immediate disqualification and the permanent revocation of any admission offers. Furthermore, submitting an application does not guarantee admission; all candidates are subject to API’s comprehensive vetting framework, which may include baseline assessments, virtual interviews, and detailed evaluations by our Admissions Committee to ensure alignment with our academic standards.</p>
+                                        <p><strong>3. CONDITIONAL OFFERS & ENROLLMENT TIMELINES</strong><br/>Due to the highly competitive demand and subsidized nature of our tech programs, strict adherence to enrollment timelines is mandatory. Should you be selected and receive a formal Offer of Admission, you are required to formally accept and reserve your seat on the portal within a strict 72-hour window. Failure to confirm your acceptance within this timeframe will result in the immediate forfeiture of your seat, which will subsequently be released to a candidate on our waiting list. Upon acceptance, all successful candidates must also attend a mandatory Welcome & Orientation event and successfully complete their onboarding onto the E-skolo learning management hub prior to the commencement of their academic track.</p>
+                                        <p><strong>4. DATA PRIVACY & POPIA COMPLIANCE</strong><br/>In strict compliance with the Protection of Personal Information Act (POPIA) of South Africa, you provide explicit consent for the Azania Paragon Institute to collect, process, and securely store your personal data for the purposes of academic evaluation, identity verification, and demographic reporting. While these foundational programs operate independently of our LaunchLab corporate placements, API may still share relevant academic profiles, assessment scores, and portfolios with verified academic partners, certification bodies, or future enterprise networks solely for the purpose of advancing your educational mobility and verifying your credentials.</p>
+                                        <p><strong>5. ACADEMIC RIGOR, ETHICS, AND I.C.E. VALUES</strong><br/>Acceptance into an API program requires intense dedication, intellectual curiosity, and an unwavering commitment to our foundational values of Innovation, Community, and Excellence (I.C.E.). By applying, you commit to fully engaging with the rigorous curriculum, asynchronous learning modules, and proctored technical examinations required to successfully complete your chosen track. You agree to be bound by our strict institutional code of conduct; any form of academic dishonesty, harassment, or unprofessional behavior during the application phase or throughout the duration of your studies will lead to disciplinary action and the immediate termination of your enrollment.</p>
+                                    </div>
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                        <input type="checkbox" className="mt-1 w-5 h-5 text-blue-600 rounded" checked={agreedToTC} onChange={(e) => setAgreedToTC(e.target.checked)} />
+                                        <span className="text-gray-700 font-medium">I confirm that I have read, understood, and agree to be bound by the Azania Paragon Institute Admissions Terms and Conditions outlined above.</span>
+                                    </label>
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                        <input type="checkbox" className="mt-1 w-5 h-5 text-blue-600 rounded" checked={agreedToTC} onChange={(e) => setAgreedToTC(e.target.checked)} />
+                                        <span className="text-gray-700 font-medium">I declare that all information and documentation I will provide during this application process is entirely true, accurate, and my own.</span>
+                                    </label>
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                        <input type="checkbox" className="mt-1 w-5 h-5 text-blue-600 rounded" checked={agreedToTC} onChange={(e) => setAgreedToTC(e.target.checked)} />
+                                        <span className="text-gray-700 font-medium">I consent to the processing of my personal information in accordance with the Protection of Personal Information Act (POPIA) for admissions, academic administration, and credential verification purposes.</span>
+                                    </label>
+                                    <label className="flex items-start space-x-3 cursor-pointer">
+                                        <input type="checkbox" className="mt-1 w-5 h-5 text-blue-600 rounded" checked={agreedToTC} onChange={(e) => setAgreedToTC(e.target.checked)} />
+                                         <span className="text-gray-700 font-medium">I acknowledge that if I receive an Offer of Admission, I must accept the offer within the strict 72-hour window, failing which my seat will be released.</span>
+                                    </label>
+                                    <button disabled={!agreedToTC} onClick={() => setStep(1)} className={`w-full py-3 rounded-md font-semibold text-white transition-colors ${agreedToTC ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}>
+                                        Proceed to Application
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* STEPS 1-4 */}
+                            {step > 0 && step < 5 && (
+                                <form onSubmit={step === 4 ? submitApplication : (e) => { e.preventDefault(); setStep(step + 1); }}>
+                                    
+                                    <div className="flex justify-between mb-8 relative">
+                                        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 -translate-y-1/2"></div>
+                                        {[1,2,3,4].map((num) => (
+                                            <div key={num} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-4 ${step >= num ? 'bg-blue-600 border-blue-100 text-white' : 'bg-white border-gray-200 text-gray-400'}`}>
+                                                {num}
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Section 1 */}
+                                    {step === 1 && (
+                                        <div className="space-y-6">
+                                            <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800"><span className="text-blue-600"><IconUser/></span> Basic Information</h2>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700">Program Applying For *</label>
+                                                    <select required name="program" value={formData.program} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md bg-white">
+                                                        <option value="">-- Select a Program --</option>
+                                                        {PROGRAMS.map(p => <option key={p.code} value={p.code}>{p.name} ({p.code})</option>)}
+                                                    </select>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div><label className="block text-sm font-medium text-gray-700">First Name *</label><input required type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                    <div><label className="block text-sm font-medium text-gray-700">Last Name *</label><input required type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div><label className="block text-sm font-medium text-gray-700">ID / Passport Number *</label><input required type="text" name="idNumber" value={formData.idNumber} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                    <div><label className="block text-sm font-medium text-gray-700">Email Address *</label><input required type="email" name="email" value={formData.email} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div><label className="block text-sm font-medium text-gray-700">Date of Birth *</label><input required type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                    <div><label className="block text-sm font-medium text-gray-700">Nationality *</label><input required type="text" name="nationality" value={formData.nationality} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                </div>
+                                                <div className="grid grid-cols-4 gap-4">
+                                                    <div><label className="block text-sm font-medium text-gray-700">Province *</label><input required type="text" name="province" value={formData.province} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                    <div><label className="block text-sm font-medium text-gray-700">City & Suburb *</label><input required type="text" name="citynsurburb" value={formData.citynsurburb} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                     <div><label className="block text-sm font-medium text-gray-700">Postal Code *</label><input required type="number" name="postalcode" value={formData.postalcode} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                    <div><label className="block text-sm font-medium text-gray-700">Street Name *</label><input required type="text" name="streetname" value={formData.streetname} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Section 2 */}
+                                    {step === 2 && (
+                                        <div className="space-y-6">
+                                            <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800"><span className="text-blue-600"><IconGraduation/></span> Educational Information</h2>
+                                            <div className="grid grid-cols-3 gap-4">
+                                                <div><label className="block text-sm font-medium text-gray-700">Institution Name</label><input required type="text" name="instName" value={formData.instName} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                <div><label className="block text-sm font-medium text-gray-700">City</label><input required type="text" name="instCity" value={formData.instCity} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                <div><label className="block text-sm font-medium text-gray-700">Province</label><input required type="text" name="instProvince" value={formData.instProvince} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Highest Qualification *</label>
+                                                <select required name="highestQual" value={formData.highestQual} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md bg-white">
+                                                    <option value="">-- Select Qualification --</option>
+                                                    <option value="Certificate">Certificate</option>
+                                                    <option value="Diploma">Diploma</option>
+                                                    <option value="Bachelors">Bachelors</option>
+                                                    <option value="Masters">Masters</option>
+                                                    <option value="Grade 10">Grade 10</option>
+                                                    <option value="Grade 11">Grade 11</option>
+                                                    <option value="Grade 12">Grade 12</option>
+                                                </select>
+                                            </div>
+
+                                            {['Certificate', 'Diploma', 'Bachelors', 'Masters'].includes(formData.highestQual) && (
+                                                <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 space-y-4">
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div><label className="block text-sm font-medium text-gray-700">Qualification Name</label><input required type="text" name="qualName" value={formData.qualName} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                        <div><label className="block text-sm font-medium text-gray-700">Year Obtained</label><input required type="number" name="qualYear" value={formData.qualYear} onChange={handleInputChange} className="mt-1 block w-full p-3 border rounded-md" /></div>
+                                                    </div>
+                                                    <div><label className="block text-sm font-medium text-gray-700">Description (Modules)</label><textarea required name="qualDescription" value={formData.qualDescription} onChange={handleInputChange} rows="3" className="mt-1 block w-full p-3 border rounded-md"></textarea></div>
+                                                </div>
+                                            )}
+
+                                            {['Grade 10', 'Grade 11', 'Grade 12'].includes(formData.highestQual) && (
+                                                <div className="space-y-4 border rounded-lg overflow-hidden">
+                                                    <div className="bg-gray-100 px-4 py-3 border-b font-medium text-gray-700 flex justify-between items-center">
+                                                        Report Card Results
+                                                        <button type="button" onClick={() => setFormData({...formData, grades: [...formData.grades, {subject:'', percentage:'', level:''}]})} className="text-sm bg-white border px-3 py-1 rounded flex items-center gap-1 hover:bg-gray-50"><IconPlus/> Add Subject</button>
+                                                    </div>
+                                                    <table className="min-w-full divide-y divide-gray-200">
+                                                        <thead className="bg-gray-50">
+                                                            <tr>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Learning Area</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">%</th>
+                                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level (1-7)</th>
+                                                                <th></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="bg-white divide-y divide-gray-200">
+                                                            {formData.grades.map((row, idx) => (
+                                                                <tr key={idx}>
+                                                                    <td className="px-4 py-2"><input required type="text" value={row.subject} onChange={e => updateGradeRow(idx, 'subject', e.target.value)} placeholder="Subject" className="w-full p-2 border rounded" /></td>
+                                                                    <td className="px-4 py-2"><input required type="number" value={row.percentage} onChange={e => updateGradeRow(idx, 'percentage', e.target.value)} placeholder="%" className="w-full p-2 border rounded" /></td>
+                                                                    <td className="px-4 py-2"><input required type="number" min="1" max="7" value={row.level} onChange={e => updateGradeRow(idx, 'level', e.target.value)} placeholder="1-7" className="w-full p-2 border rounded" /></td>
+                                                                    <td className="px-4 py-2">
+                                                                        {idx > 0 && <button type="button" onClick={() => setFormData({...formData, grades: formData.grades.filter((_, i) => i !== idx)})} className="text-red-500"><IconTrash/></button>}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Section 3 */}
+                                    {step === 3 && (
+                                        <div className="space-y-6">
+                                            <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800"><span className="text-blue-600"><IconWallet/></span> Financial Information</h2>
+                                            <div className="bg-white border p-6 rounded-lg shadow-sm space-y-4">
+                                                <h3 className="font-semibold text-gray-800">Person Responsible for Fees</h3>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div><label className="block text-sm font-medium">Full Name</label><input required type="text" name="feePayerName" value={formData.feePayerName} onChange={handleInputChange} className="mt-1 w-full p-3 border rounded-md" /></div>
+                                                    <div><label className="block text-sm font-medium">ID Number</label><input required type="text" name="feePayerID" value={formData.feePayerID} onChange={handleInputChange} className="mt-1 w-full p-3 border rounded-md" /></div>
+                                                </div>
+                                                <div className="pt-4 border-t">
+                                                    <h3 className="font-semibold text-gray-800 mb-3">Affordability Assessment</h3>
+                                                    <label className="block text-sm font-medium">Employment Status</label>
+                                                    <select required name="feePayerEmployment" value={formData.feePayerEmployment} onChange={handleInputChange} className="mt-1 w-full p-3 border rounded-md bg-white">
+                                                        <option value="">-- Select Status --</option>
+                                                        <option value="Employed">Employed</option>
+                                                        <option value="Self-Employed">Self-Employed</option>
+                                                        <option value="Unemployed">Unemployed</option>
+                                                    </select>
+                                                    <div className="mt-4 p-4 bg-orange-50 text-orange-800 rounded border border-orange-200">
+                                                        <label className="flex items-start space-x-3 cursor-pointer">
+                                                            <input required type="checkbox" name="affordabilityStatus" checked={formData.affordabilityStatus} onChange={handleInputChange} className="mt-1 w-5 h-5 text-blue-600 rounded" />
+                                                            <span className="text-sm font-medium">I confirm that the designated fee payer possesses the financial capacity to settle all study fees.</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Section 4 */}
+                                    {step === 4 && (
+                                        <div className="space-y-6">
+                                            <h2 className="text-xl font-bold flex items-center gap-2 text-gray-800"><span className="text-blue-600"><IconFile/></span> Documents & Final Consents</h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg border">
+                                                <div><label className="block text-sm font-bold text-gray-700">Certified Results (PDF/JPEG) *</label><input required type="file" name="certReportCard" accept=".pdf,.png,.jpeg,.jpg" onChange={handleFileChange} className="mt-2 w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-blue-50 file:text-blue-700"/></div>
+                                                <div><label className="block text-sm font-bold text-gray-700">Certified ID / Birth Cert *</label><input required type="file" name="certID" accept=".pdf,.png,.jpeg,.jpg" onChange={handleFileChange} className="mt-2 w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-blue-50 file:text-blue-700"/></div>
+                                                <div><label className="block text-sm font-bold text-gray-700">Proof of Residence *</label><input required type="file" name="proofOfRes" accept=".pdf,.png,.jpeg,.jpg" onChange={handleFileChange} className="mt-2 w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-blue-50 file:text-blue-700"/></div>
+                                                
+                                                {['Grade 10', 'Grade 11', 'Grade 12'].includes(formData.highestQual) && (
+                                                    <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+                                                        <label className="block text-sm font-bold text-gray-700">Parent/Guardian ID *</label>
+                                                        <p className="text-xs text-gray-500 mb-2">Required because a Grade was selected.</p>
+                                                        <input required type="file" name="parentID" accept=".pdf,.png,.jpeg,.jpg" onChange={handleFileChange} className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-yellow-100 file:text-yellow-700"/>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-3 pt-4 border-t">
+                                                <label className="flex items-start space-x-3 cursor-pointer">
+                                                    <input required type="checkbox" name="consent1" checked={formData.consent1} onChange={handleInputChange} className="mt-1 w-5 h-5 text-blue-600 rounded" />
+                                                    <span className="text-sm font-medium text-gray-700">I declare that all information provided is true and accurate.</span>
+                                                </label>
+                                                <label className="flex items-start space-x-3 cursor-pointer">
+                                                    <input required type="checkbox" name="consent2" checked={formData.consent2} onChange={handleInputChange} className="mt-1 w-5 h-5 text-blue-600 rounded" />
+                                                    <span className="text-sm font-medium text-gray-700">I consent to the Institute validating my educational results.</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Footer Nav */}
+                                    <div className="mt-8 flex justify-between pt-6 border-t border-gray-200">
+                                        <button type="button" onClick={() => setStep(step - 1)} className="px-6 py-2 border rounded-md text-gray-600 hover:bg-gray-50 font-medium">Back</button>
+                                        <button type="submit" disabled={isSubmitting} className="px-6 py-2 bg-slate-900 text-white rounded-md hover:bg-slate-800 font-medium">
+                                            {isSubmitting ? 'Processing...' : step === 4 ? 'Submit Application' : 'Next Step'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
+                            {/* STEP 5: Success */}
+                            {step === 5 && (
+                                <div className="text-center py-12">
+                                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6 text-green-600">
+                                        <IconCheck/>
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-800 mb-4">Application Received!</h2>
+                                    <p className="text-gray-600 mb-6 max-w-md mx-auto">Thank you for applying. A confirmation email has been sent.</p>
+                                    <div className="bg-gray-100 rounded-lg p-6 inline-block mb-8 border border-gray-200 shadow-inner">
+                                        <p className="text-sm text-gray-500 mb-1">Your Unique Tracking ID:</p>
+                                        <p className="text-2xl font-mono font-bold text-slate-900">{uniqueID}</p>
+                                    </div>
+                                    <div>
+                                        <button onClick={() => window.location.reload()} className="text-blue-600 hover:underline font-medium">Submit another application</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+    
+</body>
+</html>
